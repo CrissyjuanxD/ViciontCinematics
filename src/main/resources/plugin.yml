@@ -1,0 +1,40 @@
+name: ViciontCinematics
+version: '${project.version}'
+main: net.viciont.cinematics.ViciontCinematics
+api-version: '1.21'
+author: CrissyjuanxD
+description: Plugin para crear cinemáticas suaves en Minecraft
+website: https://github.com/CrissyjuanxD/viciont-cinematics
+load: STARTUP
+
+commands:
+  cinematica:
+    description: Comando principal para manejar cinemáticas
+    aliases: [cine, c]
+    usage: /<command> help
+  cinematica-viva:
+    description: Comando para cinemáticas en vivo
+    aliases: [cine-viva, cv]
+    usage: /<command> help
+
+permissions:
+  viciont.cinematics.*:
+    description: Acceso completo al plugin
+    default: op
+    children:
+      viciont.cinematics.use: true
+      viciont.cinematics.admin: true
+      viciont.cinematics.live: true
+      viciont.cinematics.gui: true
+  viciont.cinematics.use:
+    description: Usar comandos básicos de cinemáticas
+    default: op
+  viciont.cinematics.admin:
+    description: Administrar cinemáticas
+    default: op
+  viciont.cinematics.live:
+    description: Crear cinemáticas en vivo
+    default: op
+  viciont.cinematics.gui:
+    description: Usar la interfaz gráfica
+    default: op

@@ -1,0 +1,66 @@
+# Configuración de Viciont Cinematics
+# ====================================
+
+# Configuración de efectos visuales
+effects:
+  # Unicode para el efecto fade (pantalla negra)
+  fade_unicode: "\uEAA8"
+
+  # Fade inicial (al empezar cinemática)
+  initial:
+    fade_in_duration: 40      # Fade in inicial
+    fade_stay_duration: 40    # Stay inicial (TP al final del stay)
+    fade_out_duration: 40     # Fade out inicial
+
+  # Fade final (al terminar cinemática)
+  final:
+    fade_in_duration: 20      # Fade in final
+    fade_stay_duration: 60    # Stay final (TP durante el stay)
+    fade_out_duration: 40     # Fade out final
+
+# Configuración de reproducción
+playback:
+  # FPS de reproducción (frames por segundo)
+  # Valores recomendados: 20, 24, 30 (máximo 50)
+  # 20 FPS = suave, 24 FPS = cinematográfico, 30 FPS = muy fluido
+  fps: 50
+  # Usar frames prolongados para mayor fluidez
+  use_prolonged_frames: true
+
+# Configuración de sonidos
+sounds:
+  # Habilitar sistema de sonidos
+  enabled: true
+  # Volumen por defecto (0.0 - 1.0)
+  default_volume: 1.0
+  # Pitch por defecto (0.5 - 2.0)
+  default_pitch: 1.0
+  # Sonidos predefinidos para usar en cinemáticas
+  presets:
+    # Sonidos de Minecraft nativos
+    pling: "minecraft:block.note_block.pling"
+    bell: "minecraft:block.note_block.bell"
+    chime: "minecraft:block.note_block.chime"
+    harp: "minecraft:block.note_block.harp"
+    bass: "minecraft:block.note_block.bass"
+    # Sonidos de transición
+    transition_tp: "minecraft:entity.enderman.teleport"
+    transition_whoosh: "minecraft:item.elytra.flying"
+    # Sonidos ambientales
+    ambient_cave: "minecraft:ambient.cave"
+    ambient_wind: "minecraft:ambient.basalt_deltas.mood"
+    # Sonidos personalizados (ejemplos)
+    custom_wait1: "minecraft:custom.espera1"
+    custom_transition: "dtools3:tools.transitions.tp"
+    custom_dramatic: "resourcepack:cinematic.dramatic"
+
+# Configuración general
+general:
+  # Silencio global durante cinemáticas
+  global_mute: false
+  # Ocultar jugadores automáticamente
+  auto_hide_players: true
+  # Restaurar ubicación original
+  restore_location: true
+  # Restaurar modo de juego original
+  restore_gamemode: true
