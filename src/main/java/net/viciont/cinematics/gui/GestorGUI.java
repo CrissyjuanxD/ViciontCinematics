@@ -236,6 +236,21 @@ public class GestorGUI implements Listener {
         ubicacionItem.setItemMeta(ubicacionMeta);
         inventario.setItem(13, ubicacionItem);
 
+        // Sistema de interpolación
+        ItemStack interpolacionItem = new ItemStack(gestor.isInterpolacionHabilitada() ? Material.GREEN_WOOL : Material.RED_WOOL);
+        ItemMeta interpolacionMeta = interpolacionItem.getItemMeta();
+        interpolacionMeta.setDisplayName("§e§lSistema de Interpolación");
+        interpolacionMeta.setLore(Arrays.asList(
+                "§7Estado: " + (gestor.isInterpolacionHabilitada() ? "§aActivado" : "§cDesactivado"),
+                "§7FPS Objetivo: §e" + gestor.getFpsObjetivo(),
+                "§7Tipo: §e" + gestor.getInterpolador().getTipo(),
+                "§7Hace las cinemáticas más fluidas",
+                "",
+                "§e¡Clic para alternar!"
+        ));
+        interpolacionItem.setItemMeta(interpolacionMeta);
+        inventario.setItem(15, interpolacionItem);
+
         // Restaurar modo de juego
         ItemStack modoItem = new ItemStack(gestor.isRestaurarModoJuego() ? Material.GREEN_WOOL : Material.RED_WOOL);
         ItemMeta modoMeta = modoItem.getItemMeta();
@@ -247,7 +262,7 @@ public class GestorGUI implements Listener {
                 "§e¡Clic para alternar!"
         ));
         modoItem.setItemMeta(modoMeta);
-        inventario.setItem(14, modoItem);
+        inventario.setItem(16, modoItem);
 
         // Botón de volver
         ItemStack volverItem = new ItemStack(Material.ARROW);
@@ -374,6 +389,14 @@ public class GestorGUI implements Listener {
                 abrirMenuConfiguracion(jugador);
             }
             case 14 -> { // Restaurar modo de juego
+                // Slot movido, ahora es información del sistema de interpolación
+                mostrarInfoInterpolacion(jugador);
+            }
+            case 15 -> { // Sistema de interpolación (nuevo)
+                // Por ahora solo mostrar información, la configuración se hace en config.yml
+                mostrarInfoInterpolacion(jugador);
+            }
+            case 16 -> { // Restaurar modo de juego (movido)
                 gestor.setRestaurarModoJuego(!gestor.isRestaurarModoJuego());
                 plugin.enviarMensaje(jugador, "§eRestaurar modo de juego: " +
                         (gestor.isRestaurarModoJuego() ? "§aActivado" : "§cDesactivado"));
@@ -381,6 +404,25 @@ public class GestorGUI implements Listener {
             }
             case 26 -> abrirMenuPrincipal(jugador); // Volver
         }
+    }
+
+    /**
+     * Muestra información detallada sobre el sistema de interpolación
+     */
+    private void mostrarInfoInterpolacion(Player jugador) {
+        var gestor = plugin.getGestorCinematicas();
+        var interpolador = gestor.getInterpolador();
+
+        plugin.enviarMensaje(jugador, "§6§l=== Sistema de Interpolación ===");
+        plugin.enviarMensaje(jugador, "§eEstado: " + (gestor.isInterpolacionHabilitada() ? "§aHabilitado" : "§cDeshabilitado"));
+        plugin.enviarMensaje(jugador, "§eFPS Objetivo: §f" + gestor.getFpsObjetivo());
+        plugin.enviarMensaje(jugador, "§eTipo de Interpolación: §f" + interpolador.getTipo());
+        plugin.enviarMensaje(jugador, "§eSuavizado de Rotación: " + (interpolador.isSuavizadoRotacion() ? "§aHabilitado" : "§cDeshabilitado"));
+        plugin.enviarMensaje(jugador, "§eFactor de Suavizado: §f" + String.format("%.2f", interpolador.getFactorSuavizado()));
+        plugin.enviarMensaje(jugador, "§eSistema Legacy: " + (gestor.isUsarSistemaLegacy() ? "§cActivo" : "§aInactivo"));
+        plugin.enviarMensaje(jugador, "");
+        plugin.enviarMensaje(jugador, "§7Para cambiar la configuración, edita el archivo config.yml");
+        plugin.enviarMensaje(jugador, "§7y usa §f/cinematica reload§7 para aplicar los cambios");
     }
 
     @EventHandler

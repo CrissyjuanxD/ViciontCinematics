@@ -39,7 +39,7 @@ public class CinematicaTabCompleter implements TabCompleter {
                 if (subcomando.toLowerCase().startsWith(args[0].toLowerCase())) {
                     // Verificar permisos
                     if (subcomando.equals("delete") || subcomando.equals("clone") ||
-                            subcomando.equals("config") || subcomando.equals("reload")) {
+                            subcomando.equals("config") || subcomando.equals("reload") || subcomando.equals("interpolation")) {
                         if (sender.hasPermission("viciont.cinematics.admin")) {
                             completions.add(subcomando);
                         }

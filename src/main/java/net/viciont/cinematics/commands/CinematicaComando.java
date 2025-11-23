@@ -528,6 +528,7 @@ public class CinematicaComando implements CommandExecutor {
     private void recargarPlugin(CommandSender sender) {
         try {
             plugin.cargarConfiguracion();
+            plugin.getGestorCinematicas().recargarConfiguracionInterpolacion();
             if (sender instanceof Player) {
                 plugin.enviarMensaje((Player) sender, "<green>¡Configuración recargada correctamente!");
             } else {
@@ -540,5 +541,35 @@ public class CinematicaComando implements CommandExecutor {
                 sender.sendMessage("§cError al recargar la configuración: " + e.getMessage());
             }
         }
+    }
+
+    private void mostrarInfoInterpolacion(Player jugador) {
+        var gestor = plugin.getGestorCinematicas();
+        var interpolador = gestor.getInterpolador();
+
+        plugin.enviarMensaje(jugador, "<gold>§l=== Sistema de Interpolación ===");
+        plugin.enviarMensaje(jugador, "<yellow>Estado: " + (gestor.isInterpolacionHabilitada() ? "<green>Habilitado" : "<red>Deshabilitado"));
+        plugin.enviarMensaje(jugador, "<yellow>FPS Objetivo: <white>" + gestor.getFpsObjetivo());
+        plugin.enviarMensaje(jugador, "<yellow>Tipo: <white>" + interpolador.getTipo());
+        plugin.enviarMensaje(jugador, "<yellow>Suavizado de Rotación: " + (interpolador.isSuavizadoRotacion() ? "<green>Sí" : "<red>No"));
+        plugin.enviarMensaje(jugador, "<yellow>Factor de Suavizado: <white>" + String.format("%.2f", interpolador.getFactorSuavizado()));
+        plugin.enviarMensaje(jugador, "<yellow>Sistema Legacy: " + (gestor.isUsarSistemaLegacy() ? "<red>Activo" : "<green>Inactivo"));
+        plugin.enviarMensaje(jugador, "");
+        plugin.enviarMensaje(jugador, "<gray>Configura en config.yml y usa <white>/cinematica reload<gray> para aplicar");
+    }
+
+    private void mostrarInfoInterpolacionConsola(CommandSender sender) {
+        var gestor = plugin.getGestorCinematicas();
+        var interpolador = gestor.getInterpolador();
+
+        sender.sendMessage("§6§l=== Sistema de Interpolación ===");
+        sender.sendMessage("§eEstado: " + (gestor.isInterpolacionHabilitada() ? "§aHabilitado" : "§cDeshabilitado"));
+        sender.sendMessage("§eFPS Objetivo: §f" + gestor.getFpsObjetivo());
+        sender.sendMessage("§eTipo: §f" + interpolador.getTipo());
+        sender.sendMessage("§eSuavizado de Rotación: " + (interpolador.isSuavizadoRotacion() ? "§aSí" : "§cNo"));
+        sender.sendMessage("§eFactor de Suavizado: §f" + String.format("%.2f", interpolador.getFactorSuavizado()));
+        sender.sendMessage("§eSistema Legacy: " + (gestor.isUsarSistemaLegacy() ? "§cActivo" : "§aInactivo"));
+        sender.sendMessage("");
+        sender.sendMessage("§7Configura en config.yml y usa /cinematica reload para aplicar");
     }
 }

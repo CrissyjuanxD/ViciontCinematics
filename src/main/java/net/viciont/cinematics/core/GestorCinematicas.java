@@ -11,6 +11,8 @@ import net.viciont.cinematics.utils.ConfiguracionJSON;
 import net.viciont.cinematics.utils.CadenaTareas;
 import net.viciont.cinematics.events.CinematicaInicioEvent;
 import net.viciont.cinematics.events.CinematicaFinEvent;
+import net.viciont.cinematics.core.InterpoladorFrames;
+import net.viciont.cinematics.core.InterpoladorFrames.TipoInterpolacion;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -29,6 +31,12 @@ public class GestorCinematicas {
 
     private final ViciontCinematics plugin;
 
+    // Sistema de interpolación
+    private InterpoladorFrames interpolador;
+    private boolean interpolacionHabilitada;
+    private int fpsObjetivo;
+    private boolean usarSistemaLegacy;
+
     // Configuraciones del sistema
     private boolean silencioGlobal = false;
     private boolean efectoFade = true;
@@ -44,6 +52,38 @@ public class GestorCinematicas {
 
     public GestorCinematicas(ViciontCinematics plugin) {
         this.plugin = plugin;
+        inicializarSistemaInterpolacion();
+    }
+
+    /**
+     * Inicializa el sistema de interpolación basado en la configuración
+     */
+    private void inicializarSistemaInterpolacion() {
+        var config = plugin.getConfig();
+
+        // Cargar configuración de interpolación
+        this.interpolacionHabilitada = config.getBoolean("playback.interpolation.enabled", true);
+        this.fpsObjetivo = Math.max(24, Math.min(60, config.getInt("playback.interpolation.target_fps", 24)));
+        this.usarSistemaLegacy = config.getBoolean("playback.legacy.use_legacy_system", false);
+
+        // Configurar interpolador
+        String tipoStr = config.getString("playback.interpolation.type", "SMOOTH").toUpperCase();
+        TipoInterpolacion tipo;
+        try {
+            tipo = TipoInterpolacion.valueOf(tipoStr);
+        } catch (IllegalArgumentException e) {
+            tipo = TipoInterpolacion.SMOOTH;
+            plugin.getLogger().warning("Tipo de interpolación inválido: " + tipoStr + ", usando SMOOTH");
+        }
+
+        boolean suavizadoRotacion = config.getBoolean("playback.interpolation.rotation_smoothing", true);
+        double factorSuavizado = config.getDouble("playback.interpolation.smoothing_factor", 0.3);
+
+        this.interpolador = new InterpoladorFrames(tipo, suavizadoRotacion, factorSuavizado);
+
+        plugin.getLogger().info("Sistema de interpolación inicializado: " +
+                (interpolacionHabilitada ? "HABILITADO" : "DESHABILITADO") +
+                " - FPS: " + fpsObjetivo + " - Tipo: " + tipo);
     }
 
     /**
@@ -273,20 +313,8 @@ public class GestorCinematicas {
         for (String nombre : nombresCinematicas) {
             Cinematica cinematica = cinematicas.get(nombre);
 
-            // Usar configuración para determinar fluidez
-            boolean usarProlongados = plugin.getConfig().getBoolean("playback.use_prolonged_frames", true);
-            int fps = plugin.getConfig().getInt("playback.fps", 24);
-
-            // Validar FPS (mínimo 10, máximo 50)
-            if (fps < 10) fps = 10;
-            if (fps > 50) fps = 50;
-
-            // Calcular delay en ticks de Minecraft (20 ticks = 1 segundo)
-            // Para mantener sincronización con el servidor
-            int delayTicks = Math.max(1, 20 / fps);
-            long delayMs = delayTicks * 50L; // 50ms por tick
-
-            List<Frame> frames = usarProlongados ? cinematica.getFramesProlongados() : cinematica.getFrames();
+            List<Frame> frames = procesarFramesCinematica(cinematica);
+            long delayMs = calcularDelayEntreFrames();
 
             // Empezar desde el primer frame siempre
             for (int i = 0; i < frames.size(); i++) {
@@ -391,6 +419,61 @@ public class GestorCinematicas {
 
         plugin.getLogger().info("Reproduciendo cinemáticas: " + Arrays.toString(nombresCinematicas) + " para " + jugadores.size() + " jugadores");
         return true;
+    }
+
+    /**
+     * Procesa los frames de una cinemática aplicando interpolación si está habilitada
+     */
+    private List<Frame> procesarFramesCinematica(Cinematica cinematica) {
+        List<Frame> framesOriginales = cinematica.getFrames();
+
+        if (usarSistemaLegacy || !interpolacionHabilitada) {
+            // Sistema legacy
+            boolean usarProlongados = plugin.getConfig().getBoolean("playback.legacy.use_prolonged_frames", false);
+            return usarProlongados ? cinematica.getFramesProlongados() : framesOriginales;
+        }
+
+        // Sistema de interpolación moderno
+        if (framesOriginales.size() < 2) {
+            return framesOriginales;
+        }
+
+        // Optimizar frames antes de interpolar (remover redundantes)
+        List<Frame> framesOptimizados = interpolador.optimizar(framesOriginales);
+
+        // Aplicar interpolación
+        List<Frame> framesInterpolados = interpolador.interpolar(framesOptimizados, fpsObjetivo);
+
+        plugin.getLogger().info("Frames procesados: " + framesOriginales.size() +
+                " → " + framesOptimizados.size() + " (optimizados) → " +
+                framesInterpolados.size() + " (interpolados)");
+
+        return framesInterpolados;
+    }
+
+    /**
+     * Calcula el delay entre frames basado en el sistema configurado
+     */
+    private long calcularDelayEntreFrames() {
+        if (usarSistemaLegacy || !interpolacionHabilitada) {
+            // Sistema legacy
+            int fps = plugin.getConfig().getInt("playback.legacy.fps", 20);
+            fps = Math.max(10, Math.min(50, fps)); // Validar rango
+            int delayTicks = Math.max(1, 20 / fps);
+            return delayTicks * 50L; // 50ms por tick
+        }
+
+        // Sistema de interpolación - delay más preciso
+        // Calcular delay en milisegundos directamente
+        return Math.max(16L, 1000L / fpsObjetivo); // Mínimo 16ms (60 FPS máximo real)
+    }
+
+    /**
+     * Recarga la configuración del sistema de interpolación
+     */
+    public void recargarConfiguracionInterpolacion() {
+        inicializarSistemaInterpolacion();
+        plugin.getLogger().info("Configuración de interpolación recargada");
     }
 
     /**
@@ -717,6 +800,23 @@ public class GestorCinematicas {
 
     public void setRestaurarModoJuego(boolean restaurarModoJuego) {
         this.restaurarModoJuego = restaurarModoJuego;
+    }
+
+    // Getters para el sistema de interpolación
+    public InterpoladorFrames getInterpolador() {
+        return interpolador;
+    }
+
+    public boolean isInterpolacionHabilitada() {
+        return interpolacionHabilitada;
+    }
+
+    public int getFpsObjetivo() {
+        return fpsObjetivo;
+    }
+
+    public boolean isUsarSistemaLegacy() {
+        return usarSistemaLegacy;
     }
 
     /**
