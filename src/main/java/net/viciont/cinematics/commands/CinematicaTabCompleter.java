@@ -31,26 +31,18 @@ public class CinematicaTabCompleter implements TabCompleter {
         if (args.length == 1) {
             // Subcomandos principales
             List<String> subcomandos = Arrays.asList(
-                    "help", "gui", "record", "stop", "cut", "playcut", "static",
-                    "play", "list", "delete", "clone", "config", "reload", "forcestop"
+                    "help", "record", "stop", "cut", "playcut", "static",
+                    "play", "list", "delete", "clone", "reload", "forcestop"
             );
 
             for (String subcomando : subcomandos) {
                 if (subcomando.toLowerCase().startsWith(args[0].toLowerCase())) {
                     // Verificar permisos
                     if (subcomando.equals("delete") || subcomando.equals("clone") ||
-                            subcomando.equals("config") || subcomando.equals("reload") || subcomando.equals("interpolation")) {
+                            subcomando.equals("reload") || subcomando.equals("forcestop")) {
                         if (sender.hasPermission("viciont.cinematics.admin")) {
                             completions.add(subcomando);
                         }
-                    } else if (subcomando.equals("gui")) {
-                        if (sender.hasPermission("viciont.cinematics.gui")) {
-                            completions.add(subcomando);
-                        }
-                        if (sender.hasPermission("viciont.cinematics.admin")) {
-                            completions.add(subcomando);
-                        }
-                    } else if (subcomando.equals("forcestop")) {
                     } else if (sender.hasPermission("viciont.cinematics.use")) {
                         completions.add(subcomando);
                     }

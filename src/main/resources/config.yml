@@ -22,17 +22,16 @@ effects:
 playback:
   # Sistema de interpolación de frames
   interpolation:
-    # Habilitar interpolación de frames (recomendado)
+    # Habilitar interpolación (SIEMPRE habilitado para 60 FPS optimizado)
     enabled: true
-    # FPS objetivo para la interpolación (24-60)
-    # 24 FPS = cinematográfico, 30 FPS = suave, 60 FPS = ultra fluido
+    # FPS fijo en 60 para máxima suavidad y fluidez
     target_fps: 60
-    # Tipo de interpolación: LINEAR, SMOOTH, BEZIER
+    # Tipo SMOOTH optimizado para rotaciones ultra suaves
     type: "SMOOTH"
-    # Suavizado adicional para rotaciones (yaw/pitch)
+    # Suavizado avanzado de rotaciones (elimina giros bruscos)
     rotation_smoothing: true
-    # Factor de suavizado (0.1 - 1.0, más bajo = más suave)
-    smoothing_factor: 0.3
+    # Factor optimizado para rotaciones cinematográficas
+    smoothing_factor: 0.25
 
   # Sistema legacy (para compatibilidad)
   legacy:
@@ -74,9 +73,22 @@ sounds:
 general:
   # Silencio global durante cinemáticas
   global_mute: false
-  # Ocultar jugadores automáticamente
-  auto_hide_players: true
+  # NO ocultar jugadores - mantenerlos visibles con packets
+  auto_hide_players: false
   # Restaurar ubicación original
   restore_location: true
   # Restaurar modo de juego original
   restore_gamemode: true
+
+# Optimizaciones para 100+ jugadores
+performance:
+  # Usar packets de ProtocolLib para optimización extrema
+  use_packets: true
+  # Mantener jugadores visibles durante cinemáticas
+  keep_players_visible: true
+  # Pool de objetos Location para reducir garbage collection
+  location_pool_size: 1000
+  # Procesamiento asíncrono (mejora TPS con muchos jugadores)
+  async_frame_processing: true
+  # Batch size para teleports (optimiza red con muchos jugadores)
+  teleport_batch_size: 50

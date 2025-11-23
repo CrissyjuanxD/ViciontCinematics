@@ -46,17 +46,6 @@ public class CinematicaComando implements CommandExecutor {
 
         switch (subcomando) {
             case "help" -> mostrarAyuda(sender);
-            case "gui" -> {
-                if (sender instanceof Player jugador) {
-                    if (!sender.hasPermission("viciont.cinematics.gui")) {
-                        plugin.enviarMensaje(jugador, "<red>No tienes permisos para usar la GUI.");
-                        return true;
-                    }
-                    plugin.getGestorGUI().abrirMenuPrincipal(jugador);
-                } else {
-                    sender.sendMessage("§cEste comando solo puede ser usado por jugadores.");
-                }
-            }
             case "record" -> {
                 if (sender instanceof Player jugador) {
                     if (args.length < 2 || args.length > 3) {
@@ -221,17 +210,6 @@ public class CinematicaComando implements CommandExecutor {
                 }
                 clonarCinematica(sender, args[1], args[2]);
             }
-            case "config" -> {
-                if (sender instanceof Player jugador) {
-                    if (!sender.hasPermission("viciont.cinematics.admin")) {
-                        plugin.enviarMensaje(jugador, "<red>No tienes permisos de administrador.");
-                        return true;
-                    }
-                    plugin.getGestorGUI().abrirMenuConfiguracion(jugador);
-                } else {
-                    sender.sendMessage("§cEste comando solo puede ser usado por jugadores.");
-                }
-            }
             case "reload" -> {
                 if (!sender.hasPermission("viciont.cinematics.admin")) {
                     if (sender instanceof Player) {
@@ -257,19 +235,18 @@ public class CinematicaComando implements CommandExecutor {
 
     private void mostrarAyuda(CommandSender sender) {
         sender.sendMessage("§6§l=== Viciont Cinematics - Ayuda ===");
-        sender.sendMessage("§e/cinematica gui §7- Abre la interfaz gráfica");
-        sender.sendMessage("§e/cinematica record <nombre> §7- Inicia grabación de cinemática");
+        sender.sendMessage("§e/cinematica record <nombre> [normal/parts] §7- Inicia grabación");
         sender.sendMessage("§e/cinematica stop §7- Para la grabación actual");
-        sender.sendMessage("§e/cinematica static <nombre> <ticks> §7- Graba cinemática estática");
-        sender.sendMessage("§e/cinematica play <all/me/jugador> <nombres...> §7- Reproduce cinemáticas");
+        sender.sendMessage("§e/cinematica static <nombre> <ticks> §7- Graba estática");
+        sender.sendMessage("§e/cinematica play <all/me/jugador> <nombres...> §7- Reproduce");
         sender.sendMessage("§e/cinematica cut §7- Corta grabación por partes");
         sender.sendMessage("§e/cinematica playcut §7- Continúa grabación por partes");
-        sender.sendMessage("§e/cinematica list §7- Lista todas las cinemáticas");
-        sender.sendMessage("§e/cinematica delete <nombre> §7- Elimina una cinemática");
-        sender.sendMessage("§e/cinematica clone <original> <nuevo> §7- Clona una cinemática");
-        sender.sendMessage("§e/cinematica config §7- Abre configuración");
-        sender.sendMessage("§e/cinematica forcestop <all/jugador> §7- Fuerza fin de cinemática");
-        sender.sendMessage("§7§oUsa §f/cinematica gui §7§opara una experiencia más fácil!");
+        sender.sendMessage("§e/cinematica list §7- Lista cinemáticas");
+        sender.sendMessage("§e/cinematica delete <nombre> §7- Elimina cinemática");
+        sender.sendMessage("§e/cinematica clone <original> <nuevo> §7- Clona cinemática");
+        sender.sendMessage("§e/cinematica forcestop <all/jugador> §7- Fuerza fin");
+        sender.sendMessage("§e/cinematica reload §7- Recarga configuración");
+        sender.sendMessage("§a§lOptimizado para 60 FPS y 100+ jugadores");
     }
 
     private void iniciarGrabacion(Player jugador, String nombre, TipoCinematica tipo) {

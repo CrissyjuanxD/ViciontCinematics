@@ -8,6 +8,7 @@ import net.viciont.cinematics.objects.InfoJugador;
 import net.viciont.cinematics.objects.ProgresoCinematica;
 import net.viciont.cinematics.objects.Cinematica;
 import net.viciont.cinematics.objects.Frame;
+import net.viciont.cinematics.core.GestorPackets;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.entity.Player;
@@ -52,23 +53,44 @@ public class ListenerGlobal implements Listener {
             }
         }
 
-        // Aplicar fade de salida
-        // TODO: Implementar método aplicarPantallaNegraConFadeOut en GestorCinematicas
+        // NO ocultar jugadores - permitir visibilidad durante cinemáticas
+        // En su lugar, mantener visibles usando packets
+        GestorPackets gestorPackets = plugin.getGestorPackets();
 
-        // Ocultar jugadores si está configurado
-        if (gestor.isOcultarJugadoresAuto()) {
-            gestor.alternarVisibilidadJugadores(true);
-        }
-
-        // Cambiar a modo espectador
+        // Cambiar a modo espectador pero mantener visibilidad
         for (UUID uuid : espectadores) {
             Player jugador = Bukkit.getPlayer(uuid);
             if (jugador != null) {
                 jugador.setGameMode(GameMode.SPECTATOR);
-
-                // Ocultar nombres y cabezas de otros jugadores en modo espectador
-                ocultarJugadoresEspectador(jugador, espectadores);
             }
+        }
+
+        // Mantener visibles a todos los jugadores entre ellos usando packets
+        if (gestorPackets.isDisponible()) {
+            gestorPackets.mantenerVisiblesTodos(espectadores);
+
+            // Ejecutar periódicamente para asegurar visibilidad
+            Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+                if (progreso.isActiva()) {
+                    gestorPackets.mantenerVisiblesTodos(espectadores);
+                }
+            }, 20L, 20L);
+        } else {
+            // Sistema básico - mostrar a todos
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                for (UUID uuid1 : espectadores) {
+                    Player j1 = Bukkit.getPlayer(uuid1);
+                    if (j1 == null || !j1.isOnline()) continue;
+
+                    for (UUID uuid2 : espectadores) {
+                        if (uuid1.equals(uuid2)) continue;
+                        Player j2 = Bukkit.getPlayer(uuid2);
+                        if (j2 == null || !j2.isOnline()) continue;
+
+                        j1.showPlayer(plugin, j2);
+                    }
+                }
+            });
         }
 
         plugin.getLogger().info("Cinemática iniciada con " + espectadores.size() + " espectadores");
@@ -117,18 +139,20 @@ public class ListenerGlobal implements Listener {
             }
         }
 
-        // Mostrar jugadores si estaban ocultos
-        if (gestor.isOcultarJugadoresAuto()) {
-            gestor.alternarVisibilidadJugadores(false);
-        }
+        // Restaurar visibilidad normal
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            for (UUID uuid1 : espectadores) {
+                Player j1 = Bukkit.getPlayer(uuid1);
+                if (j1 == null || !j1.isOnline()) continue;
 
-        // Mostrar jugadores que estaban ocultos por el modo espectador
-        for (UUID uuid : espectadores) {
-            Player jugador = Bukkit.getPlayer(uuid);
-            if (jugador != null) {
-                mostrarJugadoresEspectador(jugador);
+                for (Player j2 : Bukkit.getOnlinePlayers()) {
+                    if (!j1.equals(j2)) {
+                        j1.showPlayer(plugin, j2);
+                        j2.showPlayer(plugin, j1);
+                    }
+                }
             }
-        }
+        });
 
         plugin.getLogger().info("Cinemática finalizada");
     }
@@ -203,30 +227,4 @@ public class ListenerGlobal implements Listener {
         }
     }
 
-    /**
-     * Oculta otros jugadores para evitar ver cabezas y nombres en modo espectador
-     */
-    private void ocultarJugadoresEspectador(Player jugador, List<UUID> espectadores) {
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            for (Player otroJugador : Bukkit.getOnlinePlayers()) {
-                // Solo ocultar jugadores que NO están en la cinemática
-                if (!espectadores.contains(otroJugador.getUniqueId()) && !otroJugador.equals(jugador)) {
-                    jugador.hidePlayer(plugin, otroJugador);
-                }
-            }
-        });
-    }
-
-    /**
-     * Muestra todos los jugadores de nuevo después de la cinemática
-     */
-    private void mostrarJugadoresEspectador(Player jugador) {
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            for (Player otroJugador : Bukkit.getOnlinePlayers()) {
-                if (!otroJugador.equals(jugador)) {
-                    jugador.showPlayer(plugin, otroJugador);
-                }
-            }
-        });
-    }
 }

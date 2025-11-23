@@ -13,6 +13,8 @@ import net.viciont.cinematics.events.CinematicaInicioEvent;
 import net.viciont.cinematics.events.CinematicaFinEvent;
 import net.viciont.cinematics.core.InterpoladorFrames;
 import net.viciont.cinematics.core.InterpoladorFrames.TipoInterpolacion;
+import net.viciont.cinematics.core.InterpoladorAvanzado;
+import net.viciont.cinematics.core.GestorPackets;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -30,6 +32,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class GestorCinematicas {
 
     private final ViciontCinematics plugin;
+    private final GestorPackets gestorPackets;
+    private final InterpoladorAvanzado interpoladorAvanzado;
 
     // Sistema de interpolación
     private InterpoladorFrames interpolador;
@@ -52,6 +56,8 @@ public class GestorCinematicas {
 
     public GestorCinematicas(ViciontCinematics plugin) {
         this.plugin = plugin;
+        this.gestorPackets = plugin.getGestorPackets();
+        this.interpoladorAvanzado = new InterpoladorAvanzado();
         inicializarSistemaInterpolacion();
     }
 
@@ -324,17 +330,23 @@ public class GestorCinematicas {
                 cadena.add(new BukkitRunnable() {
                     @Override
                     public void run() {
-                        Location loc = new Location(
-                                Bukkit.getWorld(frame.getMundo()),
-                                frame.getX(), frame.getY(), frame.getZ(),
-                                frame.getYaw(), frame.getPitch()
-                        );
-
                         Bukkit.getScheduler().runTask(plugin, () -> {
                             jugadores.forEach(uuid -> {
                                 Player jugador = Bukkit.getPlayer(uuid);
                                 if (jugador != null && jugador.isOnline()) {
-                                    jugador.teleport(loc);
+                                    // Usar packets si está disponible para mejor rendimiento
+                                    if (gestorPackets.isDisponible()) {
+                                        gestorPackets.teleportOptimizado(jugador,
+                                                frame.getX(), frame.getY(), frame.getZ(),
+                                                frame.getYaw(), frame.getPitch());
+                                    } else {
+                                        Location loc = new Location(
+                                                Bukkit.getWorld(frame.getMundo()),
+                                                frame.getX(), frame.getY(), frame.getZ(),
+                                                frame.getYaw(), frame.getPitch()
+                                        );
+                                        jugador.teleport(loc);
+                                    }
                                 }
                             });
                         });
@@ -433,22 +445,21 @@ public class GestorCinematicas {
             return usarProlongados ? cinematica.getFramesProlongados() : framesOriginales;
         }
 
-        // Sistema de interpolación moderno
         if (framesOriginales.size() < 2) {
             return framesOriginales;
         }
 
-        // Optimizar frames antes de interpolar (remover redundantes)
-        List<Frame> framesOptimizados = interpolador.optimizar(framesOriginales);
+        // Sistema avanzado para 60 FPS con rotaciones ultra suaves
+        List<Frame> framesInterpolados = interpoladorAvanzado.interpolar60FPS(framesOriginales);
 
-        // Aplicar interpolación
-        List<Frame> framesInterpolados = interpolador.interpolar(framesOptimizados, fpsObjetivo);
+        // Aplicar suavizado adicional a las rotaciones
+        List<Frame> framesFinales = interpoladorAvanzado.suavizarRotaciones(framesInterpolados);
 
         plugin.getLogger().info("Frames procesados: " + framesOriginales.size() +
-                " → " + framesOptimizados.size() + " (optimizados) → " +
-                framesInterpolados.size() + " (interpolados)");
+                " → " + framesInterpolados.size() + " (interpolados a 60 FPS) → " +
+                framesFinales.size() + " (suavizados)");
 
-        return framesInterpolados;
+        return framesFinales;
     }
 
     /**
@@ -458,14 +469,14 @@ public class GestorCinematicas {
         if (usarSistemaLegacy || !interpolacionHabilitada) {
             // Sistema legacy
             int fps = plugin.getConfig().getInt("playback.legacy.fps", 20);
-            fps = Math.max(10, Math.min(50, fps)); // Validar rango
+            fps = Math.max(10, Math.min(50, fps));
             int delayTicks = Math.max(1, 20 / fps);
-            return delayTicks * 50L; // 50ms por tick
+            return delayTicks * 50L;
         }
 
-        // Sistema de interpolación - delay más preciso
-        // Calcular delay en milisegundos directamente
-        return Math.max(16L, 1000L / fpsObjetivo); // Mínimo 16ms (60 FPS máximo real)
+        // Sistema optimizado para 60 FPS
+        // 16.67ms por frame = 60 FPS
+        return 17L;
     }
 
     /**
