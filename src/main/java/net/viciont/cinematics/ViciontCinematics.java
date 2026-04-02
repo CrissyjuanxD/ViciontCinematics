@@ -9,7 +9,6 @@ import net.viciont.cinematics.commands.CinematicaVivaComando;
 import net.viciont.cinematics.commands.CinematicaTabCompleter;
 import net.viciont.cinematics.commands.CinematicaVivaTabCompleter;
 import net.viciont.cinematics.core.GestorCinematicas;
-import net.viciont.cinematics.core.GestorPackets;
 import net.viciont.cinematics.listeners.ListenerGlobal;
 import net.viciont.cinematics.utils.ConfiguracionJSON;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -27,11 +26,9 @@ public class ViciontCinematics extends JavaPlugin {
 
     private static ViciontCinematics instancia;
     private GestorCinematicas gestorCinematicas;
-    private GestorPackets gestorPackets;
     private FileConfiguration config;
     private static final MiniMessage miniMessage = MiniMessage.miniMessage();
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private boolean protocolLibDisponible = false;
 
     @Override
     public void onEnable() {
@@ -44,9 +41,6 @@ public class ViciontCinematics extends JavaPlugin {
             getLogger().warning("Versión detectada: " + version);
             getLogger().warning("Algunas funciones podrían no funcionar correctamente.");
         }
-
-        // Verificar ProtocolLib
-        verificarProtocolLib();
 
         // Inicializar componentes principales
         inicializarComponentes();
@@ -80,25 +74,11 @@ public class ViciontCinematics extends JavaPlugin {
     }
 
     /**
-     * Verifica si ProtocolLib está disponible
-     */
-    private void verificarProtocolLib() {
-        if (getServer().getPluginManager().getPlugin("ProtocolLib") != null) {
-            protocolLibDisponible = true;
-            getLogger().info("§aProtocolLib detectado - Funciones avanzadas habilitadas");
-        } else {
-            getLogger().warning("ProtocolLib no detectado - Usando sistema básico");
-            getLogger().warning("Instala ProtocolLib para mejor rendimiento y visibilidad entre jugadores");
-        }
-    }
-
-    /**
      * Inicializa todos los componentes principales del plugin
      */
     private void inicializarComponentes() {
         try {
             this.gestorCinematicas = new GestorCinematicas(this);
-            this.gestorPackets = new GestorPackets(this);
 
             getLogger().info("§aComponentes inicializados correctamente");
         } catch (Exception e) {
@@ -188,14 +168,6 @@ public class ViciontCinematics extends JavaPlugin {
 
     public GestorCinematicas getGestorCinematicas() {
         return gestorCinematicas;
-    }
-
-    public GestorPackets getGestorPackets() {
-        return gestorPackets;
-    }
-
-    public boolean isProtocolLibDisponible() {
-        return protocolLibDisponible;
     }
 
     public static MiniMessage getMiniMessage() {
